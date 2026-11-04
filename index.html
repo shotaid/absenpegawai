@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>PresensiPro - Absen Online Mandiri</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .safe-bottom {
+            padding-bottom: max(1rem, env(safe-area-inset-bottom));
+        }
+        .pulse-btn {
+            animation: pulse-ring 2s infinite;
+        }
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 12px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen flex flex-col justify-between">
+
+    <!-- Header Navigasi -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-2 cursor-pointer" onclick="pindahTampilan('presensi')">
+                <div class="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold shadow-md shadow-blue-200">
+                    <i class="fa-solid fa-business-time"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-slate-900 leading-tight">PresensiPro</h1>
+                    <p class="text-[11px] text-slate-500 font-medium">Sistem Absensi Online Mandiri</p>
+                </div>
+            </div>
+            
+            <button id="btnHeaderAdmin" onclick="bukaModalAdmin()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-lg border border-slate-300 transition">
+                <i class="fa-solid fa-lock mr-1"></i> Admin
+            </button>
+        </div>
+    </header>
+
+    <!-- Konten Utama -->
+    <main class="max-w-md mx-auto w-full px-4 pt-4 pb-24 flex-1">
+        
+        <!-- ================= HALAMAN PRESENSI KARYAWAN ================= -->
+        <section id="halamanPresensi" class="space-y-4">
+            
+            <!-- Jam Digital Real-time -->
+            <div class="bg-gradient-to-br from-blue-600 to-indigo-700 text-white rounded-2xl p-5 shadow-lg shadow-blue-500/20 text-center relative overflow-hidden">
+                <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+                <div id="hariTanggal" class="text-xs font-medium text-blue-100 uppercase tracking-wider mb-1">Memuat tanggal...</div>
+                <div id="jamDigital" class="text-4xl font-extrabold tracking-tight font-mono">00:00:00</div>
+                <div class="inline-block mt-2 bg-blue-800/60 backdrop-blur-sm text-[11px] px-3 py-1 rounded-full text-blue-100 border border-blue-400/30">
+                    <i class="fa-solid fa-clock mr-1"></i> Patokan 07:30 (Wajib 9 Jam Kerja)
+                </div>
+            </div>
+
+            <!-- Banner Sesi Berjalan -->
+            <div id="bannerSesiAktif" class="hidden bg-amber-50 border border-amber-300 rounded-xl p-4 shadow-sm">
+                <div class="flex items-start space-x-3">
+                    <div class="text-amber-500 text-xl mt-0.5">
+                        <i class="fa-solid fa-triangle-exclamation animate-bounce"></i>
+                    </div>
+                    <div class="flex-1 text-sm">
+                        <div class="font-bold text-amber-900">Perhatian: Anda Belum Check-Out!</div>
+                        <p class="text-xs text-amber-700 mt-0.5">
+                            Sesi dimulai pukul <span id="labelJamMasukAktif" class="font-bold text-amber-900">-</span>.
+                            Waktu berjalan: <span id="labelTimerBerjalan" class="font-mono font-bold text-amber-900">00:00:00</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulir Input -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">NIP (Nomor Induk Pegawai)</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                            <i class="fa-solid fa-id-card"></i>
+                        </span>
+                        <input type="text" id="nipInput" oninput="periksaSesiNIP()" placeholder="Contoh: 19870101" 
+                            class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Nama Pegawai</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                            <i class="fa-solid fa-user"></i>
+                        </span>
+                        <input type="text" id="namaInput" placeholder="Masukkan nama lengkap" 
+                            class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Mode Kerja</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="flex items-center justify-center p-2.5 border border-slate-300 rounded-xl cursor-pointer text-xs font-bold text-slate-700 hover:bg-slate-50 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 has-[:checked]:text-blue-600 transition">
+                            <input type="radio" name="modeKerja" value="WFO" checked class="hidden">
+                            <i class="fa-solid fa-building mr-1.5"></i> WFO (Kantor)
+                        </label>
+                        <label class="flex items-center justify-center p-2.5 border border-slate-300 rounded-xl cursor-pointer text-xs font-bold text-slate-700 hover:bg-slate-50 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 has-[:checked]:text-blue-600 transition">
+                            <input type="radio" name="modeKerja" value="WFH" class="hidden">
+                            <i class="fa-solid fa-house-laptop mr-1.5"></i> WFH (Rumah)
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Tombol Aksi Check-In & Check-Out -->
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <button id="btnCheckIn" onclick="aksiCheckIn()" class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md shadow-blue-500/20 active:scale-95 transition flex items-center justify-center space-x-1.5 text-sm">
+                        <i class="fa-solid fa-right-to-bracket"></i>
+                        <span>Check-In</span>
+                    </button>
+                    
+                    <button id="btnCheckOut" onclick="aksiCheckOut()" disabled class="w-full py-3 px-4 bg-slate-200 text-slate-400 font-bold rounded-xl cursor-not-allowed transition flex items-center justify-center space-x-1.5 text-sm">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                        <span>Check-Out</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Ringkasan Setelah Selesai Sesi -->
+            <div id="kotakRingkasanSelesai" class="hidden bg-white border border-emerald-200 rounded-2xl p-4 shadow-sm text-xs space-y-2">
+                <div class="flex items-center text-emerald-700 font-bold text-sm">
+                    <i class="fa-solid fa-circle-check mr-1.5"></i> Sesi Terakhir Selesai
+                </div>
+                <div class="grid grid-cols-2 gap-2 pt-1 text-slate-600">
+                    <div>Durasi Kerja: <span id="hasilDurasi" class="font-bold text-slate-900">-</span></div>
+                    <div>Lembur: <span id="hasilLembur" class="font-bold text-emerald-600">-</span></div>
+                    <div>Produktivitas: <span id="hasilProduktivitas" class="font-bold text-blue-600">-</span></div>
+                    <div>Status: <span id="hasilStatusMasuk" class="font-bold text-slate-800">-</span></div>
+                </div>
+                <p class="text-[11px] text-slate-400 border-t border-slate-100 pt-2">
+                    *Anda dapat melakukan Check-In baru untuk sesi atau jadwal lembur berikutnya.
+                </p>
+            </div>
+        </section>
+
+        <!-- ================= HALAMAN PORTAL ADMIN ================= -->
+        <section id="halamanAdmin" class="hidden space-y-4">
+            
+            <div class="flex items-center justify-between">
+                <button onclick="pindahTampilan('presensi')" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold px-3 py-1.5 rounded-lg transition">
+                    <i class="fa-solid fa-arrow-left mr-1"></i> Kembali ke Beranda
+                </button>
+                <button onclick="kunciAdmin()" class="text-xs bg-rose-50 text-rose-600 hover:bg-rose-100 font-semibold px-3 py-1.5 rounded-lg border border-rose-200 transition">
+                    <i class="fa-solid fa-arrow-right-from-bracket mr-1"></i> Keluar Admin
+                </button>
+            </div>
+
+            <!-- Statistik -->
+            <div class="grid grid-cols-3 gap-2">
+                <div class="bg-white p-3 rounded-xl border border-slate-200 text-center shadow-sm">
+                    <div class="text-[11px] text-slate-500 font-medium">Total Sesi</div>
+                    <div id="statTotal" class="text-xl font-bold text-slate-800">0</div>
+                </div>
+                <div class="bg-white p-3 rounded-xl border border-slate-200 text-center shadow-sm">
+                    <div class="text-[11px] text-slate-500 font-medium">Tepat Waktu</div>
+                    <div id="statTepat" class="text-xl font-bold text-emerald-600">0</div>
+                </div>
+                <div class="bg-white p-3 rounded-xl border border-slate-200 text-center shadow-sm">
+                    <div class="text-[11px] text-slate-500 font-medium">Terlambat</div>
+                    <div id="statTelat" class="text-xl font-bold text-amber-600">0</div>
+                </div>
+            </div>
+
+            <!-- Tombol Ekspor CSV -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-800">Unduh Rekap Presensi</h3>
+                    <p class="text-xs text-slate-500">Format CSV siap buka di Microsoft Excel.</p>
+                </div>
+                <button onclick="eksporKeCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md shadow-emerald-500/20 transition flex items-center space-x-1.5 active:scale-95">
+                    <i class="fa-solid fa-file-excel"></i>
+                    <span>Ekspor CSV</span>
+                </button>
+            </div>
+
+            <!-- Tabel Riwayat Data -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="p-3 border-b border-slate-100 flex items-center justify-between">
+                    <h3 class="text-xs font-bold text-slate-700 uppercase">Riwayat Masuk & Pulang</h3>
+                    <button onclick="hapusSemuaData()" class="text-[11px] text-rose-500 hover:underline">Hapus Semua Data</button>
+                </div>
+                
+                <div class="overflow-x-auto max-h-96">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead class="bg-slate-50 text-slate-600 border-b border-slate-200 sticky top-0 font-semibold">
+                            <tr>
+                                <th class="p-2.5">Pegawai</th>
+                                <th class="p-2.5">Masuk</th>
+                                <th class="p-2.5">Pulang</th>
+                                <th class="p-2.5">Durasi</th>
+                                <th class="p-2.5">Lembur</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelRiwayatTubuh" class="divide-y divide-slate-100 text-slate-700">
+                            <!-- Injeksi Data JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Modal PIN Admin -->
+    <div id="modalPIN" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-xs w-full p-5 shadow-2xl border border-slate-200 text-center space-y-4">
+            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <div>
+                <h3 class="font-bold text-slate-900">Akses Khusus Admin</h3>
+                <p class="text-xs text-slate-500 mt-1">Masukkan PIN 6 digit untuk membuka data.</p>
+            </div>
+            
+            <input type="password" id="inputPINAdmin" maxlength="6" placeholder="Default: 123456" 
+                class="w-full text-center tracking-widest text-lg font-bold py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+            
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="tutupModalAdmin()" class="w-full py-2 bg-slate-100 text-slate-600 font-semibold rounded-xl text-xs hover:bg-slate-200 transition">Batal</button>
+                <button onclick="verifikasiPIN()" class="w-full py-2 bg-blue-600 text-white font-semibold rounded-xl text-xs hover:bg-blue-700 transition">Masuk</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Logika -->
+    <script>
+        const PIN_ADMIN_DEFAULT = "123456";
+
+        document.addEventListener('DOMContentLoaded', () => {
+            perbaruiJam();
+            setInterval(perbaruiJam, 1000);
+            setInterval(perbaruiTimerSesiBerjalan, 1000);
+        });
+
+        function perbaruiJam() {
+            const sekarang = new Date();
+            const opsiTanggal = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+            document.getElementById('hariTanggal').textContent = sekarang.toLocaleDateString('id-ID', opsiTanggal);
+            
+            const jam = String(sekarang.getHours()).padStart(2, '0');
+            const menit = String(sekarang.getMinutes()).padStart(2, '0');
+            const detik = String(sekarang.getSeconds()).padStart(2, '0');
+            document.getElementById('jamDigital').textContent = `${jam}:${menit}:${detik}`;
+        }
+
+        function getStorageData() {
+            return JSON.parse(localStorage.getItem('presensipro_data') || '[]');
+        }
+
+        function setStorageData(data) {
+            localStorage.setItem('presensipro_data', JSON.stringify(data));
+        }
+
+        function periksaSesiNIP() {
+            const nip = document.getElementById('nipInput').value.trim();
+            const btnIn = document.getElementById('btnCheckIn');
+            const btnOut = document.getElementById('btnCheckOut');
+            const namaInput = document.getElementById('namaInput');
+            const banner = document.getElementById('bannerSesiAktif');
+            const ringkasan = document.getElementById('kotakRingkasanSelesai');
+
+            ringkasan.classList.add('hidden');
+
+            if (!nip) {
+                resetStatusTombol();
+                banner.classList.add('hidden');
+                namaInput.readOnly = false;
+                return;
+            }
+
+            const data = getStorageData();
+            const sesiAktif = data.find(p => p.nip === nip && !p.checkOut);
+
+            if (sesiAktif) {
+                namaInput.value = sesiAktif.nama;
+                namaInput.readOnly = true;
+
+                banner.classList.remove('hidden');
+                document.getElementById('labelJamMasukAktif').textContent = sesiAktif.checkIn;
+
+                btnIn.disabled = true;
+                btnIn.className = "w-full py-3 px-4 bg-slate-200 text-slate-400 font-bold rounded-xl cursor-not-allowed transition flex items-center justify-center space-x-1.5 text-sm";
+
+                btnOut.disabled = false;
+                btnOut.className = "w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/30 pulse-btn active:scale-95 transition flex items-center justify-center space-x-1.5 text-sm";
+            } else {
+                banner.classList.add('hidden');
+                namaInput.readOnly = false;
+
+                const riwayatTerakhir = [...data].reverse().find(p => p.nip === nip);
+                if (riwayatTerakhir && !namaInput.value) {
+                    namaInput.value = riwayatTerakhir.nama;
+                }
+
+                btnIn.disabled = false;
+                btnIn.className = "w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md shadow-blue-500/20 active:scale-95 transition flex items-center justify-center space-x-1.5 text-sm";
+
+                btnOut.disabled = true;
+                btnOut.className = "w-full py-3 px-4 bg-slate-200 text-slate-400 font-bold rounded-xl cursor-not-allowed transition flex items-center justify-center space-x-1.5 text-sm";
+            }
+        }
+
+        function resetStatusTombol() {
+            const btnIn = document.getElementById('btnCheckIn');
+            const btnOut = document.getElementById('btnCheckOut');
+            btnIn.disabled = false;
+            btnIn.className = "w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md shadow-blue-500/20 transition flex items-center justify-center space-x-1.5 text-sm";
+            btnOut.disabled = true;
+            btnOut.className = "w-full py-3 px-4 bg-slate-200 text-slate-400 font-bold rounded-xl cursor-not-allowed transition flex items-center justify-center space-x-1.5 text-sm";
+        }
+
+        function perbaruiTimerSesiBerjalan() {
+            const nip = document.getElementById('nipInput').value.trim();
+            if (!nip) return;
+
+            const data = getStorageData();
+            const sesiAktif = data.find(p => p.nip === nip && !p.checkOut);
+            if (!sesiAktif) return;
+
+            const durasiDetik = Math.floor((Date.now() - sesiAktif.timestampMasuk) / 1000);
+            const jam = String(Math.floor(durasiDetik / 3600)).padStart(2, '0');
+            const mnt = String(Math.floor((durasiDetik % 3600) / 60)).padStart(2, '0');
+            const dtk = String(durasiDetik % 60).padStart(2, '0');
+
+            const labelTimer = document.getElementById('labelTimerBerjalan');
+            if (labelTimer) labelTimer.textContent = `${jam}:${mnt}:${dtk}`;
+        }
+
+        function aksiCheckIn() {
+            const nip = document.getElementById('nipInput').value.trim();
+            const nama = document.getElementById('namaInput').value.trim();
+            const mode = document.querySelector('input[name="modeKerja"]:checked').value;
+
+            if (!nip || !nama) {
+                alert("Mohon isi NIP dan Nama Pegawai terlebih dahulu!");
+                return;
+            }
+
+            const data = getStorageData();
+            const adaGantung = data.find(p => p.nip === nip && !p.checkOut);
+            if (adaGantung) {
+                alert("Anda masih memiliki sesi kerja yang belum di-checkout!");
+                return;
+            }
+
+            const sekarang = new Date();
+            const jamMasuk = String(sekarang.getHours()).padStart(2, '0') + ':' + String(sekarang.getMinutes()).padStart(2, '0');
+            
+            const menitMasuk = (sekarang.getHours() * 60) + sekarang.getMinutes();
+            const menitPatokan = (7 * 60) + 30; // Patokan 07:30
+            const isTerlambat = menitMasuk > menitPatokan;
+
+            const sesiBaru = {
+                id: 'AT-' + Date.now(),
+                nip: nip,
+                nama: nama,
+                mode: mode,
+                tanggal: sekarang.toLocaleDateString('id-ID'),
+                timestampMasuk: Date.now(),
+                checkIn: jamMasuk,
+                isTerlambat: isTerlambat,
+                timestampPulang: null,
+                checkOut: null,
+                durasiKerjaMenit: 0,
+                lemburMenit: 0,
+                skorProduktivitas: 0
+            };
+
+            data.push(sesiBaru);
+            setStorageData(data);
+            
+            alert(`Berhasil Check-In pada pukul ${jamMasuk}! Selamat bekerja.`);
+            periksaSesiNIP();
+        }
+
+        function aksiCheckOut() {
+            const nip = document.getElementById('nipInput').value.trim();
+            if (!nip) return;
+
+            const data = getStorageData();
+            const indexSesi = data.findIndex(p => p.nip === nip && !p.checkOut);
+
+            if (indexSesi === -1) {
+                alert("Tidak ditemukan sesi berjalan untuk NIP ini.");
+                return;
+            }
+
+            const sekarang = new Date();
+            const jamKeluar = String(sekarang.getHours()).padStart(2, '0') + ':' + String(sekarang.getMinutes()).padStart(2, '0');
+            const sesi = data[indexSesi];
+
+            sesi.timestampPulang = Date.now();
+            sesi.checkOut = jamKeluar;
+
+            const totalMenitKerja = Math.max(1, Math.round((sesi.timestampPulang - sesi.timestampMasuk) / (1000 * 60)));
+            sesi.durasiKerjaMenit = totalMenitKerja;
+
+            const targetKerjaMenit = 540; // 9 jam kerja termasuk istirahat
+            let menitLembur = 0;
+
+            if (totalMenitKerja > targetKerjaMenit) {
+                menitLembur = totalMenitKerja - targetKerjaMenit;
+            }
+            sesi.lemburMenit = menitLembur;
+
+            const skor = Math.min(150, Math.round((totalMenitKerja / targetKerjaMenit) * 100));
+            sesi.skorProduktivitas = skor;
+
+            data[indexSesi] = sesi;
+            setStorageData(data);
+
+            tampilkanRingkasanSelesai(sesi);
+            periksaSesiNIP();
+            alert(`Berhasil Check-Out pada pukul ${jamKeluar}! Data tersimpan.`);
+        }
+
+        function formatMenitKeJam(totalMenit) {
+            const jam = Math.floor(totalMenit / 60);
+            const mnt = totalMenit % 60;
+            return `${jam} jam ${mnt} mnt`;
+        }
+
+        function tampilkanRingkasanSelesai(sesi) {
+            const ringkasan = document.getElementById('kotakRingkasanSelesai');
+            document.getElementById('hasilDurasi').textContent = formatMenitKeJam(sesi.durasiKerjaMenit);
+            document.getElementById('hasilLembur').textContent = sesi.lemburMenit > 0 ? formatMenitKeJam(sesi.lemburMenit) : 'Tidak Ada';
+            document.getElementById('hasilProduktivitas').textContent = `${sesi.skorProduktivitas}%`;
+            document.getElementById('hasilStatusMasuk').textContent = sesi.isTerlambat ? 'Terlambat' : 'Tepat Waktu';
+            ringkasan.classList.remove('hidden');
+        }
+
+        function bukaModalAdmin() {
+            document.getElementById('modalPIN').classList.remove('hidden');
+            document.getElementById('inputPINAdmin').value = '';
+            document.getElementById('inputPINAdmin').focus();
+        }
+
+        function tutupModalAdmin() {
+            document.getElementById('modalPIN').classList.add('hidden');
+        }
+
+        function verifikasiPIN() {
+            const pin = document.getElementById('inputPINAdmin').value;
+            if (pin === PIN_ADMIN_DEFAULT) {
+                tutupModalAdmin();
+                pindahTampilan('admin');
+                muatDataAdmin();
+            } else {
+                alert("PIN Salah! Akses ditolak.");
+            }
+        }
+
+        function kunciAdmin() {
+            pindahTampilan('presensi');
+        }
+
+        function pindahTampilan(tampilan) {
+            const halPresensi = document.getElementById('halamanPresensi');
+            const halAdmin = document.getElementById('halamanAdmin');
+            const btnHeader = document.getElementById('btnHeaderAdmin');
+
+            if (tampilan === 'admin') {
+                halPresensi.classList.add('hidden');
+                halAdmin.classList.remove('hidden');
+                btnHeader.classList.add('hidden');
+            } else {
+                halPresensi.classList.remove('hidden');
+                halAdmin.classList.add('hidden');
+                btnHeader.classList.remove('hidden');
+            }
+        }
+
+        function muatDataAdmin() {
+            const data = getStorageData();
+            const tabel = document.getElementById('tabelRiwayatTubuh');
+            tabel.innerHTML = '';
+
+            let totalTepat = 0;
+            let totalTelat = 0;
+
+            if (data.length === 0) {
+                tabel.innerHTML = `<tr><td colspan="5" class="text-center p-4 text-slate-400">Belum ada riwayat presensi yang tercatat.</td></tr>`;
+            } else {
+                [...data].reverse().forEach(row => {
+                    if (row.isTerlambat) totalTelat++; else totalTepat++;
+
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50 border-b border-slate-100";
+                    tr.innerHTML = `
+                        <td class="p-2.5">
+                            <div class="font-bold text-slate-900">${row.nama}</div>
+                            <div class="text-[10px] text-slate-400">${row.nip} • ${row.tanggal} (${row.mode})</div>
+                        </td>
+                        <td class="p-2.5">
+                            <span class="font-semibold">${row.checkIn}</span>
+                            <div class="text-[10px] ${row.isTerlambat ? 'text-amber-600 font-bold' : 'text-emerald-600'}">
+                                ${row.isTerlambat ? 'Terlambat' : 'Tepat Waktu'}
+                            </div>
+                        </td>
+                        <td class="p-2.5 font-semibold">
+                            ${row.checkOut ? row.checkOut : '<span class="text-amber-500 italic">Bekerja...</span>'}
+                        </td>
+                        <td class="p-2.5 text-slate-600">
+                            ${row.durasiKerjaMenit ? formatMenitKeJam(row.durasiKerjaMenit) : '-'}
+                        </td>
+                        <td class="p-2.5 font-bold ${row.lemburMenit > 0 ? 'text-emerald-600' : 'text-slate-400'}">
+                            ${row.lemburMenit > 0 ? formatMenitKeJam(row.lemburMenit) : '-'}
+                        </td>
+                    `;
+                    tabel.appendChild(tr);
+                });
+            }
+
+            document.getElementById('statTotal').textContent = data.length;
+            document.getElementById('statTepat').textContent = totalTepat;
+            document.getElementById('statTelat').textContent = totalTelat;
+        }
+
+        function eksporKeCSV() {
+            const data = getStorageData();
+            if (data.length === 0) {
+                alert("Belum ada data untuk diekspor!");
+                return;
+            }
+
+            let csvContent = "\uFEFF";
+            csvContent += "ID,NIP,Nama,Tanggal,Mode,Jam Masuk,Status Masuk,Jam Pulang,Durasi Kerja,Lembur,Produktivitas\n";
+
+            data.forEach(item => {
+                const statusMasuk = item.isTerlambat ? "Terlambat" : "Tepat Waktu";
+                const durasi = item.durasiKerjaMenit ? formatMenitKeJam(item.durasiKerjaMenit) : "-";
+                const lembur = item.lemburMenit > 0 ? formatMenitKeJam(item.lemburMenit) : "-";
+                const skor = item.skorProduktivitas ? `${item.skorProduktivitas}%` : "-";
+
+                const baris = [
+                    `"${item.id}"`,
+                    `"${item.nip}"`,
+                    `"${item.nama}"`,
+                    `"${item.tanggal}"`,
+                    `"${item.mode}"`,
+                    `"${item.checkIn}"`,
+                    `"${statusMasuk}"`,
+                    `"${item.checkOut || 'Belum Pulang'}"`,
+                    `"${durasi}"`,
+                    `"${lembur}"`,
+                    `"${skor}"`
+                ].join(",");
+
+                csvContent += baris + "\n";
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Rekap_Presensi_${new Date().toISOString().slice(0, 10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function hapusSemuaData() {
+            if (confirm("Peringatan: Apakah Anda yakin ingin menghapus seluruh data riwayat presensi? Tindakan ini tidak dapat dibatalkan.")) {
+                localStorage.removeItem('presensipro_data');
+                muatDataAdmin();
+                alert("Semua data berhasil dibersihkan.");
+            }
+        }
+    </script>
+</body>
+</html>
